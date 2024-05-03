@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+    "$basetexture" "reticle/BlastFurnaceReticle"
+	"$selfillum" "1"
+    "$additive" 1
+}
+

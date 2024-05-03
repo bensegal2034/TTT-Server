@@ -1,0 +1,7 @@
+"UnlitGeneric"
+{
+	"$baseTexture" "models/BlastFurnaceReticle"
+	$additive 1
+	$nocull 1
+	$model 1
+}

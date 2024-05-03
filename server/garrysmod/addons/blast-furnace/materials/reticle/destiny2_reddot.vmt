@@ -1,0 +1,7 @@
+"VertexlitGeneric"
+{
+    "$basetexture" "reticle/destiny2_reddot"
+	"$selfillum" "1"
+    "$additive" 1
+}
+
