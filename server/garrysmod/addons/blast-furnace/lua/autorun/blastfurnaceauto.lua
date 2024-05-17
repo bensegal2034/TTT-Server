@@ -1,4 +1,5 @@
 game.AddParticles( "particles/hl2mmod_muzzleflashes.pcf" )
+
 PrecacheParticleSystem( "blast_furnace_muzzle" )
 
 resource.AddFile("materials/effects/hl2mmod/hl2mmod_ae2explosions.vmt")

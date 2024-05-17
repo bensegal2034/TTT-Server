@@ -1,0 +1,29 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/House of Meylin/BlastFurnaceSight3"
+	"$bumpmap" "models/BlastFurnaceSight_Normal"
+	"$normalmapalphaenvmapmask" "1"
+	"$phong" 					"1"
+	"$phongboost"				"20"
+	//"$phongexponent"			"35"
+	"$phongalbedotint" "1"
+	"$phongfresnelranges" 		"[0.1 2 1]"
+	//"$phongtint" "[0.7 0.5 0.7]"
+	"$envmap" "env_cubemap"
+	//"$envmaptint" "[.2 .2 .2]"
+	"$envmapfresnel"			"1"
+	"$model" "1"
+	$nocull 1
+	
+	$envmapmultiplier	"[.5 .4 .1]" // Lighting will be multiplied by this value
+
+
+	Proxies
+	{
+		TFA_CubemapTint
+		{
+			resultvar	$envmaptint // Write final output to $envmaptint
+			multiplier	$envmapmultiplier // Use our value for default envmap tint
+		}
+	}
+}

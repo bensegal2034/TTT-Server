@@ -50,11 +50,9 @@ SWEP.Primary.RPM_Burst = 900 -- RPM for burst fire, overrides semi.  This is in 
 SWEP.Primary.DryFireDelay = nil -- How long you have to wait after firing your last shot before a dryfire animation can play.  Leave nil for full empty attack length.  Can also use SWEP.StatusLength[ ACT_VM_BLABLA ]
 SWEP.Primary.BurstDelay = nil -- Delay between bursts, leave nil to autocalculate
 SWEP.BurstFireCount = 4 -- Burst fire count override (autocalculated by the clip size if nil)
-
+//SWEP.MuzzleAttachment           = "muzzle"       -- Should be "1" for CSS models or "muzzle" for hl2 models
 SWEP.DoMuzzleFlash 					= true
 SWEP.MuzzleFlashEffect 				= "tfa_muzzleflash_rifle"
-//SWEP.MuzzleAttachment           = "muzzle"       -- Should be "1" for CSS models or "muzzle" for hl2 models
-
 SWEP.IronRecoilMultiplier			= 0.75
 SWEP.CrouchRecoilMultiplier			= 0.85
 SWEP.JumpRecoilMultiplier			= 2
@@ -73,7 +71,6 @@ SWEP.ProjectileEntity 				= nil
 SWEP.ProjectileModel 				= nil
 
 SWEP.ViewModel						= "models/weapons/c_blast_furnace.mdl"
-//SWEP.ViewModelOrnament				= "models/weapons/outbreak/c_outbreak_affliction.mdl"
 SWEP.WorldModel						= nil
 SWEP.ViewModelFOV					= 58
 SWEP.ViewModelFlip					= false
@@ -115,14 +112,6 @@ SWEP.RunSightsAng = Vector(-18, 36, -13.5)
 SWEP.InspectPos = Vector(7, -4, -4)
 SWEP.InspectAng = Vector(20, 38, 5)	
 
-SWEP.Attachments = {
-	[1] = { offset = { 0, 0 }, atts = { "satoutribe", "houseofmeylin", "dreamingspectrum", "vitrifiedchronology" }, order = 1 },
-	[2] = { offset = { 0, 0 }, atts = { "d2mp_backup_mag", "d2mp_sprint_grip", "d2mp_freehand_grip", "d2mp_icarus_grip", }, order = 1 },
-	[3] = { offset = { 0, 0 }, atts = { "d2mp_light_rounds", "d2mp_heavy_rounds"}, order = 2 },
-	[4] = { offset = { 0, 0 }, atts = { "d2mp_quick_access_sling", "d2mp_counterbalance", "d2mp_zen_moment", "d2mp_snapshot"}, order = 3 },
-	[5] = { offset = { 0, 0 }, atts = { "d2mp_dragonfly_spec", "d2mp_subsistence"}, order = 4 }
-}
-
 SWEP.ViewModelBoneMods = {
 	["ValveBiped.Bip01_Spine4"] = { scale = Vector(1, 1, 1), pos = Vector(-2.5, 1.6, 0.65), angle = Angle(0, -1, 0) },
 	["ValveBiped.Bip01_L_Finger0"] = { scale = Vector(1, 1, 1), pos = Vector(0, 0, 0), angle = Angle(-10, 14, 2) },
@@ -137,131 +126,11 @@ SWEP.WElements = {
 	["world"] = { type = "Model", model = "models/weapons/c_blast_furnace.mdl", bone = "ValveBiped.Bip01_R_Hand", rel = "", pos = Vector(-11.948, 6.752, -6.753), angle = Angle(-8.183, 1.169, 180), size = Vector(0.9, 0.9, 0.9), color = Color(255, 255, 255, 255), surpresslightning = false, material = "", skin = 0, bodygroup = {} }
 }
 
-SWEP.ViewModelPunchPitchMultiplier = .1 -- Default value is 0.5
-SWEP.ViewModelPunchPitchMultiplier_IronSights = nil -- Default value is 0.09
-
-SWEP.ViewModelPunch_MaxVertialOffset = 1 -- Default value is 3
-SWEP.ViewModelPunch_MaxVertialOffset_IronSights = nil -- Default value is 1.95
-SWEP.ViewModelPunch_VertialMultiplier = .5 -- Default value is 1
-SWEP.ViewModelPunch_VertialMultiplier_IronSights = nil -- Default value is 0.25
-
--- [[VIEWMODEL BLOWBACK]] --
-SWEP.BlowbackEnabled = true -- Enable Blowback?
-SWEP.BlowbackVector = Vector(0, -1, 0) -- Vector to move bone <or root> relative to bone <or view> orientation.
-SWEP.BlowbackAngle = nil -- Angle(0, 0, 0)
-SWEP.BlowbackCurrentRoot = 0 -- Amount of blowback currently, for root
-SWEP.BlowbackCurrent = 0 -- Amount of blowback currently, for bones
-SWEP.BlowbackBoneMods = nil -- Viewmodel bone mods via SWEP Creation Kit
-SWEP.Blowback_Only_Iron = true -- Only do blowback on ironsights
-SWEP.Blowback_PistolMode = true -- Do we recover from blowback when empty?
-SWEP.Blowback_Shell_Enabled = false -- Shoot shells through blowback animations
-SWEP.BlowbackAllowAnimation = false -- Allow playing shoot animation with blowback?
-
-SWEP.SequenceRateOverride= { [ACT_VM_RELOAD] = .9 -- 2x faster reload
-}
-
-
-DEFINE_BASECLASS( SWEP.Base )
+DEFINE_BASECLASS(SWEP.Base)
 
 local l_CT = CurTime
 
-function SWEP:TriggerAttack(tableName, clipID) //Overwrites original function from base so fire sound doesnt play 3 times, only once.
-	local self2 = self:GetTable()
-	local ply = self:GetOwner()
-
-	local fnname = clipID == 2 and "Secondary" or "Primary"
-
-	if TFA.Enum.ShootReadyStatus[self:GetShootStatus()] then
-		self:SetShootStatus(TFA.Enum.SHOOT_IDLE)
-	end
-
-	if self2.CanBeSilenced and (ply.KeyDown and self:KeyDown(IN_USE)) and (SERVER or not sp) then
-		local _, tanim = self:ChooseSilenceAnim(not self:GetSilenced())
-		self:ScheduleStatus(TFA.Enum.STATUS_SILENCER_TOGGLE, self:GetActivityLength(tanim, true))
-
-		return
-	end
-
-	self["SetNext" .. fnname .. "Fire"](self, l_CT() + self:GetFireDelay())
-
-	if self:GetMaxBurst() > 1 then
-		self:SetBurstCount(math.max(1, self:GetBurstCount() + 1))
-	end
-
-	if self:GetStat("PumpAction") and self:GetReloadLoopCancel() then return end
-
-	self:SetStatus(TFA.Enum.STATUS_SHOOTING, self["GetNext" .. fnname .. "Fire"](self))
-	self:ToggleAkimbo()
-	self:IncreaseRecoilLUT()
-
-	local ifp = IsFirstTimePredicted()
-
-	local _, tanim = self:ChooseShootAnim(ifp)
-
-	if (not sp) or (not self:IsFirstPerson()) then
-		ply:SetAnimation(PLAYER_ATTACK1)
-	end
-
-	if self:GetStat(tableName .. ".Sound") and ifp and not (sp and CLIENT) then
-		if ply:IsPlayer() and self:GetStat(tableName .. ".LoopSound") and (not self:GetStat(tableName .. ".LoopSoundAutoOnly", false) or self2.Primary_TFA.Automatic) then
-			self:EmitGunfireLoop()
-		else
-			local tgtSound = self:GetStat(tableName .. ".Sound")
-
-			if self:GetSilenced() then
-				tgtSound = self:GetStat(tableName .. ".SilencedSound", tgtSound)
-			end
-
-			if (not sp and SERVER) or not self:IsFirstPerson() then
-				tgtSound = self:GetSilenced() and self:GetStat(tableName .. ".SilencedSound_World", tgtSound) or self:GetStat(tableName .. ".Sound_World", tgtSound)
-			end
-			if self:GetBurstCount() == 1 then //This is what overwrites the burst sound, yep, thats it
-				self:EmitGunfireSound(tgtSound)
-			end
-		end
-
-		self:EmitLowAmmoSound()
-	end
-
-	self2["Take" .. fnname .. "Ammo"](self, self:GetStat(tableName .. ".AmmoConsumption"))
-
-	if self["Clip" .. clipID](self) == 0 and self:GetStat(tableName .. ".ClipSize") > 0 then
-		self["SetNext" .. fnname .. "Fire"](self, math.max(self["GetNext" .. fnname .. "Fire"](self), l_CT() + (self:GetStat(tableName .. ".DryFireDelay", self:GetActivityLength(tanim, true)))))
-	end
-
-	self:ShootBulletInformation()
-	self:UpdateJamFactor()
-	local _, CurrentRecoil = self:CalculateConeRecoil()
-	self:Recoil(CurrentRecoil, ifp)
-
-	-- shouldn't this be not required since recoil state is completely networked?
-	if sp and SERVER then
-		self:CallOnClient("Recoil", "")
-	end
-
-	if self:GetStat(tableName .. ".MuzzleFlashEnabled", self:GetStat("MuzzleFlashEnabled")) and (not self:IsFirstPerson() or not self:GetStat(tableName .. ".AutoDetectMuzzleAttachment", self:GetStat("AutoDetectMuzzleAttachment"))) then
-		self:ShootEffectsCustom()
-	end
-
-	if self:GetStat(tableName .. ".EjectionSmoke", self:GetStat("EjectionSmoke")) and CLIENT and ply == LocalPlayer() and ifp and not self:GetStat(tableName .. ".LuaShellEject", self:GetStat("LuaShellEject")) then
-		self:EjectionSmoke()
-	end
-
-	self:DoAmmoCheck(clipID)
-
-	-- Condition self:GetStatus() == TFA.Enum.STATUS_SHOOTING is always true?
-	if self:GetStatus() == TFA.Enum.STATUS_SHOOTING and self:GetStat("PumpAction") then
-		if self["Clip" .. clipID](self) == 0 and self:GetStat("PumpAction.value_empty") then
-			self:SetReloadLoopCancel(true)
-		elseif (self:GetStat(tableName .. ".ClipSize") < 0 or self["Clip" .. clipID](self) > 0) and self:GetStat("PumpAction.value") then
-			self:SetReloadLoopCancel(true)
-		end
-	end
-
-	self:RollJamChance()
-end
-
-function SWEP:Think(...)
+function SWEP:Think()
 	if CLIENT then
 		if self:GetIronsights() then
 			self.VElements["reticle"].color = Color(255, 255, 255, 255)
@@ -269,5 +138,4 @@ function SWEP:Think(...)
 			self.VElements["reticle"].color = Color(255, 255, 255, 0)
 		end
 	end
-	return BaseClass.Think(self, ...)
 end
